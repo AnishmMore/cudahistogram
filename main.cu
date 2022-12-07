@@ -13,12 +13,18 @@ int main(int argc, char* argv[])
     printf("\nSetting up the problem..."); fflush(stdout);
     startTime(&timer);
 
-    unsigned int *in_h;
-    unsigned int* bins_h;
-    unsigned int *in_d;
-    unsigned int* bins_d;
+    unsigned int *in_h1;
+    unsigned int* bins_h1;
+    unsigned int *in_d1;
+    unsigned int* bins_d1;
+    unsigned int *in_d2;
+    unsigned int* bins_d2;
     unsigned int num_elements, num_bins;
     cudaError_t cuda_ret;
+    cudaStream_t stream0, stream1;
+    cudaStreamCreate(&stream0);
+    cudaStreamCreate(&stream1);
+    
 
     if(argc == 1) {
         num_elements = 1000000;
@@ -43,15 +49,21 @@ int main(int argc, char* argv[])
     stopTime(&timer); printf("%f s\n", elapsedTime(timer));
     printf("    Input size = %u\n    Number of bins = %u\n", num_elements,
         num_bins);
-
+   
+    int SegSize = num_elements/2;
     // Allocate device variables ----------------------------------------------
 
     printf("Allocating device variables..."); fflush(stdout);
     startTime(&timer);
-
-    cuda_ret = cudaMalloc((void**)&in_d, num_elements * sizeof(unsigned int));
+  
+    cuda_ret = cudaMalloc((void**)&in_d1, SegSize * sizeof(unsigned int));
     if(cuda_ret != cudaSuccess) printf("Unable to allocate device memory");
-    cuda_ret = cudaMalloc((void**)&bins_d, num_bins * sizeof(unsigned int));
+    cuda_ret = cudaMalloc((void**)&bins_d1, num_bins * sizeof(unsigned int));
+    if(cuda_ret != cudaSuccess) printf("Unable to allocate device memory");
+	
+    cuda_ret = cudaMalloc((void**)&in_d2, SegSize * sizeof(unsigned int));
+    if(cuda_ret != cudaSuccess) printf("Unable to allocate device memory");
+    cuda_ret = cudaMalloc((void**)&bins_d2, num_bins * sizeof(unsigned int));
     if(cuda_ret != cudaSuccess) printf("Unable to allocate device memory");
 
     cudaDeviceSynchronize();
@@ -62,9 +74,9 @@ int main(int argc, char* argv[])
     printf("Copying data from host to device..."); fflush(stdout);
     startTime(&timer);
 
-    cuda_ret = cudaMemcpy(in_d, in_h, num_elements * sizeof(unsigned int),
+    //cuda_ret = cudaMemcpy(in_d, in_h, num_elements * sizeof(unsigned int),
         cudaMemcpyHostToDevice);
-    if(cuda_ret != cudaSuccess) printf("Unable to copy memory to the device");
+    //if(cuda_ret != cudaSuccess) printf("Unable to copy memory to the device");
 
     cuda_ret = cudaMemset(bins_d, 0, num_bins * sizeof(unsigned int));
     if(cuda_ret != cudaSuccess) printf("Unable to set device memory");
@@ -75,8 +87,19 @@ int main(int argc, char* argv[])
     // Launch kernel ----------------------------------------------------------
     printf("Launching kernel..."); fflush(stdout);
     startTime(&timer);
-
-    histogram(in_d, bins_d, num_elements, num_bins);
+	
+    dim3 block(BLOCK_SIZE);
+    dim3 grid((BLOCK_SIZE + block.x - 1)/block.x);
+    for (int i = 0; i <num_elements ; i+=SegSize*2) {
+	cudaMemcpyAsync(in_d1, in_h+i, SegSize * sizeof(unsigned int),cudaMemcpyHostToDevice,stream0);
+	cudaMemcpyAsync(in_d2, in_h+i+SegSize, SegSize * sizeof(unsigned int),cudaMemcpyHostToDevice,stream1);
+	histo_kernel<<<grid,block,0,stream0>>>(in_d1,bins_d1,SegSize,num_bins);
+	histo_kernel<<<grid,block,0,stream1>>>(in_d2,bins_d2,SegSize,num_bins);
+	cudaMemcpy(bins_h+i, bins_d1, num_bins * sizeof(unsigned int),cudaMemcpyDeviceToHost,stream0);
+	cudaMemcpy(bins_h+i+SegSize, bins_d2, num_bins * sizeof(unsigned int),cudaMemcpyDeviceToHost,stream1);
+    }
+	    
+    //histogram(in_d, bins_d, num_elements, num_bins);
     cuda_ret = cudaDeviceSynchronize();
     if(cuda_ret != cudaSuccess) printf("Unable to launch/execute kernel");
 
@@ -87,9 +110,9 @@ int main(int argc, char* argv[])
     printf("Copying data from device to host..."); fflush(stdout);
     startTime(&timer);
 
-    cuda_ret = cudaMemcpy(bins_h, bins_d, num_bins * sizeof(unsigned int),
-        cudaMemcpyDeviceToHost);
-	  if(cuda_ret != cudaSuccess) printf("Unable to copy memory to host");
+    //cuda_ret = cudaMemcpy(bins_h, bins_d, num_bins * sizeof(unsigned int),
+        //cudaMemcpyDeviceToHost);
+	  //if(cuda_ret != cudaSuccess) printf("Unable to copy memory to host");
 
     cudaDeviceSynchronize();
     stopTime(&timer); printf("%f s\n", elapsedTime(timer));
@@ -102,7 +125,8 @@ int main(int argc, char* argv[])
 
     // Free memory ------------------------------------------------------------
 
-    cudaFree(in_d); cudaFree(bins_d);
+    cudaFree(in_d1); cudaFree(bins_d1);
+    cudaFree(in_d2); cudaFree(bins_d2);
     free(in_h); free(bins_h);
 
     return 0;
