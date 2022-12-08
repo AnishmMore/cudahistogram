@@ -30,18 +30,18 @@ __global__ void histo_kernel(unsigned int* input, unsigned int* bins, unsigned i
 }	
 	  /*************************************************************************/
 
-void histogram(unsigned int* input, unsigned int* bins, unsigned int num_elements, unsigned int num_bins) {
+// void histogram(unsigned int* input, unsigned int* bins, unsigned int num_elements, unsigned int num_bins) {
 
 	  /*************************************************************************/
     //INSERT CODE HERE
 
 
-	dim3 block(BLOCK_SIZE);
-	dim3 grid((BLOCK_SIZE + block.x - 1)/block.x);
-	histo_kernel<<<grid,block>>>(input,bins,num_elements,num_bins);
+//	dim3 block(BLOCK_SIZE);
+//	dim3 grid((BLOCK_SIZE + block.x - 1)/block.x);
+//	histo_kernel<<<grid,block>>>(input,bins,num_elements,num_bins);
 
 	  /*************************************************************************/
 
-}
+//}
 
 
