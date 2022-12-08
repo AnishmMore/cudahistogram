@@ -1,2 +1,2 @@
 # cudahistogram
-Using streams to further optimize histogram
+Using streams to optimize histogram
