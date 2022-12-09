@@ -12,7 +12,7 @@ To create and run the histogram program using streams, you can follow these step
 Note: Make sure you have the necessary dependencies installed on your system, such as a compatible compiler and the NVIDIA profiling tools (if using the **`nvprof`** command)
 
 
-Results/Comaprison: 
+**Results/Comaprison:**
 
 **Stream-implemented histogram code:**
 <img width="1094" alt="Screenshot 2022-12-08 at 1 16 08 AM" src="https://user-images.githubusercontent.com/57623274/206806957-fee0b9b3-70aa-4a3e-80ae-1b34346275b3.png">
