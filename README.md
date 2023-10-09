@@ -22,7 +22,7 @@ Note: Make sure you have the necessary dependencies installed on your system, su
 
 
 **Conclusion:**
-Using CUDA streams on the GPU can potentially improve the performance of an application by allowing it to achieve an additional 2 to 2.5 times more speedup. CUDA streams provide a way to execute multiple independent tasks on the GPU concurrently. This allows for a higher degree of parallelism and can improve performance by allowing the GPU to process more instructions in parallel. However, it is important to note that the actual speedup achieved by using CUDA streams will depend on the specific application and the characteristics of the input data. The optimal number of streams and the performance benefits of using streams may vary depending on these factors.
+Using CUDA streams on the GPU can potentially improve the performance of an application by allowing it to achieve an additional 10x times more speedup. CUDA streams provide a way to execute multiple independent tasks on the GPU concurrently. This allows for a higher degree of parallelism and can improve performance by allowing the GPU to process more instructions in parallel. However, it is important to note that the actual speedup achieved by using CUDA streams will depend on the specific application and the characteristics of the input data. The optimal number of streams and the performance benefits of using streams may vary depending on these factors.
 
 
 **Future work:**
